@@ -15,6 +15,7 @@
 #include "ymglue.h"
 #include "cpu/fake6502.h"
 #include "wav_recorder.h"
+#include "ffmpeg_recorder.h"
 #include "audio.h"
 #include "cartridge.h"
 #include "iso_8859_15.h"
@@ -507,6 +508,7 @@ emu_recorder_set(gif_recorder_command_t command)
 // 5: record_gif
 // 6: record_wav
 // 7: cmd key toggle
+// 12: record_ffmpeg
 // 8: write: reset cpu clock counter
 // 8: read: snapshots cpu clock counter and reads the LSB bits 0-7
 // 9: write: output debug byte 1
@@ -526,7 +528,22 @@ emu_write(uint8_t reg, uint8_t value)
 		case 2: log_keyboard = v; break;
 		case 3: echo_mode = value; break;
 		case 4: save_on_exit = v; break;
-		case 5: emu_recorder_set((gif_recorder_command_t) value); break;
+		case 5: {
+			if (ffmpeg_recorder_get_state() != RECORD_FFMPEG_DISABLED) {
+				ffmpeg_recorder_command_t cmd;
+				if (value == 0) {
+					cmd = RECORD_FFMPEG_PAUSE;
+				} else if (value == 2) {
+					cmd = RECORD_FFMPEG_RECORD;
+				} else {
+					cmd = RECORD_FFMPEG_SNAP;
+				}
+				ffmpeg_recorder_set(cmd);
+			} else {
+				emu_recorder_set((gif_recorder_command_t) value);
+			}
+			break;
+		}
 		case 6: wav_recorder_set((wav_recorder_command_t) value); break;
 		case 7: disable_emu_cmd_keys = v; break;
 		case 8: clock_base = clockticks6502; break;
@@ -538,7 +555,7 @@ emu_write(uint8_t reg, uint8_t value)
 			} else if (value >= 0xa1) {
 				print_iso8859_15_char((char) value);
 			} else {
-				printf("\xef\xbf\xbd"); // �
+				printf("\xef\xbf\xbd"); // 
 			}
 			fflush(stdout);
 			break;
@@ -561,12 +578,21 @@ emu_read(uint8_t reg, bool debugOn)
 	} else if (reg == 4) {
 		return save_on_exit ? 1 : 0;
 	} else if (reg == 5) {
+		if (ffmpeg_recorder_get_state() != RECORD_FFMPEG_DISABLED) {
+			ffmpeg_recorder_state_t state = ffmpeg_recorder_get_state();
+			if (state == RECORD_FFMPEG_PAUSED) {
+				return RECORD_GIF_PAUSED;
+			} else if (state == RECORD_FFMPEG_ACTIVE) {
+				return RECORD_GIF_ACTIVE;
+			} else {
+				return RECORD_GIF_DISABLED;
+			}
+		}
 		return record_gif;
 	} else if (reg == 6) {
 		return wav_recorder_get_state();
 	} else if (reg == 7) {
 		return disable_emu_cmd_keys ? 1 : 0;
-
 	} else if (reg == 8) {
 		if (!debugOn)
 			clock_snap = clockticks6502 - clock_base;

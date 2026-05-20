@@ -7,6 +7,7 @@
 #include "vera_psg.h"
 #include "vera_pcm.h"
 #include "wav_recorder.h"
+#include "ffmpeg_recorder.h"
 #include "ymglue.h"
 #include "midi.h"
 #include <stdint.h>
@@ -395,13 +396,17 @@ audio_render()
 		ym_samp_pos_rd = (ym_samp_pos_rd + ym_samps_per_host_samps) & SAMP_POS_MASK_FRAC;
 		fs_samp_pos_rd = (fs_samp_pos_rd + fs_samps_per_host_samps) & SAMP_POS_MASK_FRAC;
 		if (wridx == buffer_size) {
-			wav_recorder_process(&buffer[wridx_old], (buffer_size - wridx_old) / 2);
+			int count = (buffer_size - wridx_old) / 2;
+			wav_recorder_process(&buffer[wridx_old], count);
+			ffmpeg_recorder_push_audio(&buffer[wridx_old], count);
 			wridx = 0;
 			wridx_old = 0;
 		}
 	}
 	if ((wridx - wridx_old) > 0) {
-		wav_recorder_process(&buffer[wridx_old], (wridx - wridx_old) / 2);
+		int count = (wridx - wridx_old) / 2;
+		wav_recorder_process(&buffer[wridx_old], count);
+		ffmpeg_recorder_push_audio(&buffer[wridx_old], count);
 	}
 	buffer_written += len * 2;
 	if (buffer_written > buffer_size) {

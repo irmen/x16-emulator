@@ -14,6 +14,7 @@
 #include "debugger.h"
 #include "keyboard.h"
 #include "gif.h"
+#include "ffmpeg_recorder.h"
 #include "joystick.h"
 #include "vera_spi.h"
 #include "vera_psg.h"
@@ -1373,6 +1374,8 @@ video_update()
 		}
 	}
 
+	ffmpeg_recorder_push_video(framebuffer);
+
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, sdlTexture, NULL, NULL);
 
@@ -1542,6 +1545,8 @@ video_end()
 		GifEnd(&gif_writer);
 		record_gif = RECORD_GIF_DISABLED;
 	}
+
+	ffmpeg_recorder_shutdown();
 
 	is_fullscreen = false;
 	SDL_SetWindowFullscreen(window, 0);

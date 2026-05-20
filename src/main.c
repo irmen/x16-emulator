@@ -40,6 +40,7 @@
 #include "audio.h"
 #include "version.h"
 #include "wav_recorder.h"
+#include "ffmpeg_recorder.h"
 #include "testbench.h"
 #include "cartridge.h"
 #include "midi.h"
@@ -118,6 +119,7 @@ bool has_via2 = false;
 gif_recorder_state_t record_gif = RECORD_GIF_DISABLED;
 char *gif_path = NULL;
 char *wav_path = NULL;
+char *ffmpeg_path = NULL;
 uint8_t *fsroot_path = NULL;
 uint8_t *startin_path = NULL;
 uint8_t keymap = 0; // KERNAL's default
@@ -471,6 +473,11 @@ usage()
 	printf("\tPOKE $9FB6,2 to automatically begin recording on the first non-zero audio signal.\n");
 	printf("\tPOKE $9FB6,1 to begin recording immediately.\n");
 	printf("\tPOKE $9FB6,0 to pause.\n");
+	printf("-record <file.mp4>\n");
+	printf("\tRecord video and audio to an MP4 file using ffmpeg.\n");
+	printf("\tRequires ffmpeg to be installed and available in PATH.\n");
+	printf("\tOnly supported on Linux and macOS (not available on Windows).\n");
+	printf("\tPOKE $9FB5,2 to start recording, POKE $9FB5,0 to pause.\n");
 	printf("-scale {1|2|3|4}\n");
 	printf("\tScale output to an integer multiple of 640x480\n");
 	printf("-quality {nearest|linear|best}\n");
@@ -873,6 +880,15 @@ main(int argc, char **argv)
 			wav_path = argv[0];
 			argv++;
 			argc--;
+		} else if (!strcmp(argv[0], "-record")) {
+			argc--;
+			argv++;
+			if (!argc || argv[0][0] == '-') {
+				usage();
+			}
+			ffmpeg_path = argv[0];
+			argv++;
+			argc--;
 		} else if (!strcmp(argv[0], "-debug")) {
 			argc--;
 			argv++;
@@ -1150,6 +1166,11 @@ main(int argc, char **argv)
 		}
 	}
 
+	if (gif_path && ffmpeg_path) {
+		fprintf(stderr, "Error: -gif and -record are mutually exclusive.\n");
+		exit(1);
+	}
+
 	if (is_gen2) {
 		num_banks = NUM_MAX_BANKS;
 		num_ram_banks = NUM_MAX_RAM_BANKS;
@@ -1273,6 +1294,7 @@ main(int argc, char **argv)
 	}
 
 	wav_recorder_set_path(wav_path);
+	ffmpeg_recorder_init(ffmpeg_path);
 
 	memory_init();
 
@@ -1301,6 +1323,7 @@ main(int argc, char **argv)
 void main_shutdown() {
 	if (!headless){
 		wav_recorder_shutdown();
+		ffmpeg_recorder_shutdown();
 		audio_close();
 		video_end();
 		SDL_Quit();

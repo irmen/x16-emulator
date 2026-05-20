@@ -83,6 +83,8 @@ When starting `x16emu` without arguments, it will pick up the system ROM (`rom.b
 * `-prg <app.prg>[,<load_addr>]` lets you specify a `.prg` file that gets loaded after start. It is fetched from the host filesystem, even if an SD card is attached. The override load address is hex without a prefix.
 * `-bas <app.txt>` lets you specify a BASIC program in ASCII format that automatically typed in (and tokenized).
 * `-run` executes the application specified through `-prg` or `-bas` using `RUN`.
+* `-test <number>` runs the specified unit test on startup.
+* `-record <file.mp4>` records video and audio to an MP4 file using ffmpeg (requires the ffmpeg command in PATH).
 * `-scale {1|2|3|4}` scales video output to an integer multiple of 640x480
 * `-quality {nearest|linear|best}` change image scaling algorithm quality
     * `nearest`: nearest pixel sampling
@@ -271,12 +273,12 @@ Functions while running
 * `⌘=` and `⇧⌘+` will toggle warp mode.
 
 
-GIF Recording
--------------
+Screen Recording (GIF / FFmpeg)
+------------------------------
 
-With the argument `-gif`, followed by a filename, a screen recording will be saved into the given GIF file. Please exit the emulator before reading the GIF file.
+With the argument `-gif`, followed by a filename, a screen recording will be saved into the given GIF file. With the argument `-record`, followed by an MP4 filename, a video/audio recording will be saved using FFmpeg (which must be installed and available in the host's PATH). Note that `-gif` and `-record` are mutually exclusive options.
 
-If the option `,wait` is specified after the filename, it will start recording on `POKE $9FB5,2`. It will capture a single frame on `POKE $9FB5,1` and pause recording on `POKE $9FB5,0`. `PEEK($9FB5)` returns a 128 if recording is enabled but not active.
+If recording is started paused (e.g. specifying `,wait` after the GIF filename, or when using `-record` which starts paused by default), it will start/resume recording on `POKE $9FB5,2` and pause recording on `POKE $9FB5,0`. For GIF recording, you can also capture a single frame on `POKE $9FB5,1`. `PEEK($9FB5)` returns the current state of the active recorder: `0` for disabled, `1` for paused/not active, and `3` for recording/active.
 
 
 WAV Recording

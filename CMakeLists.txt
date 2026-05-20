@@ -194,8 +194,11 @@ set(X16_SOURCES
     src/keyboard.c
     src/icon.c
     src/timing.c
-    src/wav_recorder.c
-    src/testbench.c
+	src/wav_recorder.c
+	src/testbench.c
+)
+
+list(APPEND X16_SOURCES
     src/files.c
     src/cartridge.c
     src/iso_8859_15.c
@@ -203,6 +206,10 @@ set(X16_SOURCES
     src/midi.c
     src/extern/ymfm/src/ymfm_opm.cpp
 )
+
+if(NOT WIN32)
+    list(APPEND X16_SOURCES src/ffmpeg_recorder.c)
+endif()
 
 if(WIN32)
     list(APPEND X16_SOURCES src/video_win32.c)
