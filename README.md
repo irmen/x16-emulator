@@ -84,7 +84,7 @@ When starting `x16emu` without arguments, it will pick up the system ROM (`rom.b
 * `-bas <app.txt>` lets you specify a BASIC program in ASCII format that automatically typed in (and tokenized).
 * `-run` executes the application specified through `-prg` or `-bas` using `RUN`.
 * `-test <number>` runs the specified unit test on startup.
-* `-record <file.mp4>` records video and audio to an MP4 file using ffmpeg (requires the ffmpeg command in PATH).
+* `-record <file.mp4>` records video and audio to an MP4 file using ffmpeg (requires the ffmpeg command in PATH). Only works on Linux and Mac OS (not Windows).
 * `-scale {1|2|3|4}` scales video output to an integer multiple of 640x480
 * `-quality {nearest|linear|best}` change image scaling algorithm quality
     * `nearest`: nearest pixel sampling
